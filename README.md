@@ -6,7 +6,11 @@ Gradle plugin for the Mali Texture Compression Tool
 
 ## How to use
 
-Add the following buildscript configuration to the top of your build.gradle
+First, download and install the Mali Texture Compression Tool from the [official website](https://developer.arm.com/products/software-development-tools/graphics-development-tools/mali-texture-compression-tool).
+
+Note the path to the _/bin_ directory once installed.
+
+Next, add the following buildscript configuration to the top of your build.gradle
 
 ```gradle
 buildscript {
@@ -21,7 +25,7 @@ buildscript {
 }
 ```
 
-Then add the plugin configuration to your project.
+Then add the plugin configuration to your project and set the folders/paths as appropriate.
 
 ```gradle
 project(":projectName") {
@@ -33,6 +37,7 @@ project(":projectName") {
       inputPaths = ["../preprocess/backgrounds"]
       outputPaths = ["../assets/backgrounds"]
       maliBinFolderPath = "/path/to/mali/bin/directory/"
+      
       etc {
          enabled = true
          ktx = true
