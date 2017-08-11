@@ -28,6 +28,10 @@ package org.mini2Dx.mali.domain
  */
 class Astc {
 	/**
+	 * Enables ASTC compression
+	 */
+	boolean enabled = false;
+	/**
 	 * Set the speed/quality tradeoff. Can be veryfast, fast, medium, thorough or exhaustive. 
 	 * Defaults to medium.
 	 */

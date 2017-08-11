@@ -28,6 +28,10 @@ package org.mini2Dx.mali.domain
  */
 class Etc {
 	/**
+	 * Enables ETC compression
+	 */
+	boolean enabled = false;
+	/**
 	 * Set to false for slower more thorough optimal quality search
 	 */
 	boolean fastCompression = true;

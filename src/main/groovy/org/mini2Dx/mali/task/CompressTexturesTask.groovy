@@ -26,6 +26,8 @@ package org.mini2Dx.mali.task
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
 /**
  *
  */
@@ -33,31 +35,45 @@ class CompressTexturesTask extends DefaultTask {
 
 	@TaskAction
 	def compressTextures() {
-		File inputDirectory = new File(project.getExtensions().findByName('mali').inputPath);
-		File outputDirectory = new File(project.getExtensions().findByName('mali').outputPath);
+		String [] inputPaths = project.getExtensions().findByName('mali').inputPaths;
+		String [] outputPaths = project.getExtensions().findByName('mali').outputPaths;
 		
-		String binFolder = null;
-		if(project.getExtensions().findByName('mali').maliBinFolderPath == null) {
-			if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-				binFolder = project.getExtensions().findByName('mali').maliWindowsBinFolderPath;
-			} else if (Os.isFamily(Os.FAMILY_MAC)) {
-				binFolder = project.getExtensions().findByName('mali').maliWindowsBinFolderPath;
-			} else if (Os.isFamily(Os.FAMILY_UNIX)) {
-				binFolder = project.getExtensions().findByName('mali').maliWindowsBinFolderPath;
+		if(inputPaths.length != outputPaths.length) {
+			throw new RuntimeException("No Mali bin folder specified");
+		}
+		
+		for(int i = 0; i < inputPaths.length; i++) {
+			File inputDirectory = project.file(inputPaths[i]);
+			File outputDirectory = project.file(outputPaths[i]);
+			
+			String binFolder = null;
+			if(project.getExtensions().findByName('mali').maliBinFolderPath == null) {
+				if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+					binFolder = project.getExtensions().findByName('mali').maliWindowsBinFolderPath;
+				} else if (Os.isFamily(Os.FAMILY_MAC)) {
+					binFolder = project.getExtensions().findByName('mali').maliMacBinFolderPath;
+				} else if (Os.isFamily(Os.FAMILY_UNIX)) {
+					binFolder = project.getExtensions().findByName('mali').maliLinuxBinFolderPath;
+				}
+			} else {
+				binFolder = project.getExtensions().findByName('mali').maliBinFolderPath;
 			}
-		} else {
-			binFolder = project.getExtensions().findByName('mali').maliBinFolderPath;
-		}
-
-		if(project.getExtensions().findByName('mali').etc != null) {
-			compressTexturesUsingEtc(binFolder, outputDirectory.getAbsolutePath(), inputDirectory.listFiles());
-		}
-		if(project.getExtensions().findByName('mali').astc != null) {
-			compressTexturesUsingAstc(binFolder, outputDirectory.getAbsolutePath(), inputDirectory.listFiles());
+			
+			if(binFolder == null) {
+				throw new RuntimeException("No Mali bin folder specified");
+			}
+	
+			if(project.getExtensions().findByName('mali').etc.enabled) {
+				compressTexturesUsingEtc(binFolder, outputDirectory.getAbsolutePath(), inputDirectory.listFiles());
+			}
+			if(project.getExtensions().findByName('mali').astc.enabled) {
+				compressTexturesUsingAstc(binFolder, outputDirectory.getAbsolutePath(), inputDirectory.listFiles());
+			}
 		}
 	}
 
 	def compressTexturesUsingAstc(String binFolder, String outputDirectory, File [] files) {
+		int totalTextures = 0;
 		for(File file : files) {
 			if(!isSupportedInputFormat(file)) {
 				println "Skipping " + file.getAbsolutePath();
@@ -69,6 +85,9 @@ class CompressTexturesTask extends DefaultTask {
 			args.add(file.getAbsolutePath());
 			args.add(new File(outputDirectory, getFilenameWithoutExtension(file) + ".astc").getAbsolutePath());
 
+			args.add(project.getExtensions().findByName('mali').astc.bitsPerTexel);
+			args.add("-" + project.getExtensions().findByName('mali').astc.compressionSpeed);
+			
 			if(project.getExtensions().findByName('mali').astc.alphablend) {
 				args.add("-alphablend");
 			}
@@ -77,10 +96,13 @@ class CompressTexturesTask extends DefaultTask {
 			}
 
 			runMali(args)
+			totalTextures++;
 		}
+		println "Compressed " + totalTextures + " textures with astcenc"
 	}
 
 	def compressTexturesUsingEtc(String binFolder, String outputDirectory, File [] files) {
+		int totalTextures = 0;
 		for(File file : files) {
 			if(!isSupportedInputFormat(file)) {
 				println "Skipping " + file.getAbsolutePath();
@@ -88,9 +110,50 @@ class CompressTexturesTask extends DefaultTask {
 			}
 			List<String> args = new ArrayList<String>();
 			args.add(getBinPath(binFolder, "etcpack"));
+			args.add(file.getAbsolutePath());
+			args.add(outputDirectory);
+			
+			args.add("-s");
+			if(project.getExtensions().findByName('mali').etc.fastCompression) {
+				args.add("fast");
+			} else {
+				args.add("slow");
+			}
+			
+			args.add("-e");
+			if(project.getExtensions().findByName('mali').etc.perceptual) {
+				args.add("perceptual");
+			} else {
+				args.add("nonperceptual");
+			}
+			
+			args.add("-c");
+			if(project.getExtensions().findByName('mali').etc.etc2) {
+				args.add("etc2");
+			} else {
+				args.add("etc1");
+			}
+			
+			args.add("-f");
+			args.add(project.getExtensions().findByName('mali').etc.format);
+			
+			if(project.getExtensions().findByName('mali').etc.mipmaps) {
+				args.add("-mipmaps");
+			}
+			if(project.getExtensions().findByName('mali').etc.ktx) {
+				args.add("-ktx");
+			}
+			if(project.getExtensions().findByName('mali').etc.verbose) {
+				args.add("-v");
+			}
+			if(project.getExtensions().findByName('mali').etc.progress) {
+				args.add("-progress");
+			}
 
 			runMali(args);
+			totalTextures++;
 		}
+		println "Compressed " + totalTextures + " textures with etcpack"
 	}
 
 	def runMali(List<String> processArgs) {

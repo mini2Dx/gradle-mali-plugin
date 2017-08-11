@@ -30,13 +30,13 @@ import java.util.List
  */
 class MaliExtension {
 	/**
-	 * The path of the input directory containing all textures to compress
+	 * The path of the input directories containing all textures to compress
 	 */
-	String inputPath;
+	String [] inputPaths;
 	/**
-	 * The path of the output directory to output compressed textures to
+	 * The path of the output directories to output compressed textures to (paired to the input paths)
 	 */
-	String outputPath;
+	String [] outputPaths;
 	
 	/**
 	 * The path to the 'bin' folder for mali
