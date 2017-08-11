@@ -1,4 +1,7 @@
 # gradle-mali-plugin
+
+[![Build Status](https://travis-ci.org/mini2Dx/gradle-mali-plugin.svg?branch=master)](https://travis-ci.org/mini2Dx/gradle-mali-plugin)
+
 Gradle plugin for the Mali Texture Compression Tool
 
 ## How to use
